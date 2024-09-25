@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa's Wish List</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <!-- SheetJS Library -->
+    <style>
+        /* Style for the alert modal */
+        .alert-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .alert-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+        .alert-modal img {
+            width: 100px;
+            height: auto;
+        }
+        .close-btn {
+            cursor: pointer;
+            font-size: 18px;
+            color: red;
+        }
+
+        /* Additional styles for video background */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Raleway', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://www.designyourway.net/blog/wp-content/uploads/2024/04/christmas-wallpaper-from-designyourway-800x533.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        #video-bg {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .form-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #881b1b;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-container input {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background: none;
+            color: #333;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-container input:focus {
+            border-color: #0cc0df;
+        }
+
+        .input-container label {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 16px;
+            color: #999;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-container input:focus + label,
+        .input-container input:not(:placeholder-shown) + label {
+            top: -20px;
+            left: 10px;
+            font-size: 14px;
+            color: #0cc0df;
+        }
+
+        button {
+            background: #0cc0df;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0a99ad;
+        }
+
+        /* Mobile adjustments */
+        @media screen and (max-width: 768px) {
+            .form-box {
+                width: 90%;
+                padding: 15px;
+            }
+
+            .logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            .input-container input {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+
+            .input-container label {
+                font-size: 14px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .form-box {
+                width: 95%;
+            }
+
+            h2 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .logo {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop id="video-bg">
+        <source src="MANI.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="container">
+        <div class="form-box">
+            <img src="https://pbs.twimg.com/profile_images/1213013489930735616/kJo4UnE9_400x400.jpg" alt="Santa Claus" class="logo">
+            <h2>Send Your Wish List to Santa!</h2>
+            <form id="wish-form">
+                <div class="input-container">
+                    <input type="text" id="username" required>
+                    <label>Username</label>
+                </div>
+                <div class="input-container">
+                    <input type="email" id="email" required>
+                    <label>Email</label>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="phone" required>
+                    <label>Active Mobile Number</label>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="wish1" required>
+                    <label>First Wish</label>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="wish2" required>
+                    <label>Second Wish</label>
+                </div>
+
+                <!-- Submit and Download Buttons -->
+                <button type="submit" id="submit-btn">Submit</button>
+                <button type="button" id="download-btn">Download Wish List</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom alert modal for success message -->
+    <div id="alertModal" class="alert-modal">
+        <div class="alert-modal-content">
+            <span class="close-btn" onclick="closeAlertModal()"></span>
+            <img src="https://i.ibb.co/3Sb6Q3H/hehe.png" alt="Santa Image">
+            <p>Your wish list has been submitted to Santa!</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Initialization -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwXJnjeWAAF_1kgfDBvgGVZaE5Qq_l0fU",
+            authDomain: "santa-clause-ffec7.firebaseapp.com",
+            databaseURL: "https://santa-clause-ffec7-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "santa-clause-ffec7",
+            storageBucket: "santa-clause-ffec7.appspot.com",
+            messagingSenderId: "186892672371",
+            appId: "1:186892672371:web:b71b5c89e0def0690db906",
+            measurementId: "G-MESR6CSN7X"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // Submit button functionality to submit wish list to Firebase
+        document.getElementById("wish-form").addEventListener("submit", function(e) {
+            e.preventDefault();  // Prevent the default form submission
+
+            // Gather form data
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const wish1 = document.getElementById("wish1").value;
+            const wish2 = document.getElementById("wish2").value;
+
+            // Validate input fields before submitting
+            if (!username || !email || !phone || !wish1 || !wish2) {
+                alert("Please fill out all fields before submitting the form.");
+                return;
+            }
+
+            // Write the data to Firebase Realtime Database
+            set(ref(db, 'wishlists/' + username), {
+                Username: username,
+                Email: email,
+                Phone: phone,
+                FirstWish: wish1,
+                SecondWish: wish2
+            }).then(() => {
+                // Show custom alert with image
+                showAlertModal();
+            }).catch((error) => {
+                alert("Error: " + error.message);
+            });
+        });
+
+        // Download button functionality to download wish list as Excel
+        document.getElementById("download-btn").addEventListener("click", function() {
+            // Gather form data
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const wish1 = document.getElementById("wish1").value;
+            const wish2 = document.getElementById("wish2").value;
+
+            // Validate input fields before downloading
+            if (!username || !email || !phone || !wish1 || !wish2) {
+                alert("Please fill out all fields before downloading the wish list.");
+                return;
+            }
+
+            // Create data for Excel file with corrected labels
+            const data = [
+                ["Username", "Email", "Active Mobile Number", "First Wish", "Second Wish"],  // Headers
+                [username, email, phone, wish1, wish2]  // User inputted data
+            ];
+
+            // Create a new worksheet
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+            // Create a new workbook
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Wish List");
+
+            // Convert workbook to a file and trigger a download
+            XLSX.writeFile(workbook, `${username}_wishlist.xlsx`);
+
+            alert("Your wish list has been downloaded!");
+
+            // Clear form inputs after download
+            document.getElementById("username").value = "";
+            document.getElementById("email").value = "";
+            document.getElementById("phone").value = "";
+            document.getElementById("wish1").value = "";
+            document.getElementById("wish2").value = "";
+        });
+
+        // Function to show the custom alert modal
+        function showAlertModal() {
+            const modal = document.getElementById("alertModal");
+            modal.style.display = "block";
+        }
+
+        // Function to close the custom alert modal
+        function closeAlertModal() {
+            const modal = document.getElementById("alertModal");
+            modal.style.display = "none";
+        }
+
+        // Close the modal when clicking outside the content
+        window.onclick = function(event) {
+            const modal = document.getElementById("alertModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+    </script>
+</body>
+</html>
