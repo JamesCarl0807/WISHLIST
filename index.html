@@ -249,7 +249,7 @@
     <!-- Custom alert modal for success message -->
     <div id="alertModal" class="alert-modal">
         <div class="alert-modal-content">
-            <span class="close-btn" onclick="closeAlertModal()"></span>
+            <span class="close-btn" onclick="closeAlertModal(event)"></span>
             <img src="https://i.ibb.co/3Sb6Q3H/hehe.png" alt="Santa Image">
             <p>Your wish list has been submitted to Santa!</p>
         </div>
@@ -271,106 +271,90 @@
             storageBucket: "santa-clause-ffec7.appspot.com",
             messagingSenderId: "186892672371",
             appId: "1:186892672371:web:b71b5c89e0def0690db906",
-            measurementId: "G-MESR6CSN7X"
+            measurementId: "G-MESR6BX5QR"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
-        const db = getDatabase(app);
+        const database = getDatabase(app);
 
-        // Submit button functionality to submit wish list to Firebase
-        document.getElementById("wish-form").addEventListener("submit", function(e) {
-            e.preventDefault();  // Prevent the default form submission
-
-            // Gather form data
-            const username = document.getElementById("username").value;
-            const email = document.getElementById("email").value;
-            const phone = document.getElementById("phone").value;
-            const wish1 = document.getElementById("wish1").value;
-            const wish2 = document.getElementById("wish2").value;
-
-            // Validate input fields before submitting
-            if (!username || !email || !phone || !wish1 || !wish2) {
-                alert("Please fill out all fields before submitting the form.");
-                return;
-            }
-
-            // Write the data to Firebase Realtime Database
-            set(ref(db, 'wishlists/' + username), {
-                Username: username,
-                Email: email,
-                Phone: phone,
-                FirstWish: wish1,
-                SecondWish: wish2
-            }).then(() => {
-                // Show custom alert with image
-                showAlertModal();
-            }).catch((error) => {
-                alert("Error: " + error.message);
-            });
-        });
-
-        // Download button functionality to download wish list as Excel
-        document.getElementById("download-btn").addEventListener("click", function() {
-            // Gather form data
-            const username = document.getElementById("username").value;
-            const email = document.getElementById("email").value;
-            const phone = document.getElementById("phone").value;
-            const wish1 = document.getElementById("wish1").value;
-            const wish2 = document.getElementById("wish2").value;
-
-            // Validate input fields before downloading
-            if (!username || !email || !phone || !wish1 || !wish2) {
-                alert("Please fill out all fields before downloading the wish list.");
-                return;
-            }
-
-            // Create data for Excel file with corrected labels
-            const data = [
-                ["Username", "Email", "Active Mobile Number", "First Wish", "Second Wish"],  // Headers
-                [username, email, phone, wish1, wish2]  // User inputted data
-            ];
-
-            // Create a new worksheet
-            const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-            // Create a new workbook
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Wish List");
-
-            // Convert workbook to a file and trigger a download
-            XLSX.writeFile(workbook, `${username}_wishlist.xlsx`);
-
-            alert("Your wish list has been downloaded!");
-
-            // Clear form inputs after download
-            document.getElementById("username").value = "";
-            document.getElementById("email").value = "";
-            document.getElementById("phone").value = "";
-            document.getElementById("wish1").value = "";
-            document.getElementById("wish2").value = "";
-        });
-
-        // Function to show the custom alert modal
+        // Function to show custom alert
         function showAlertModal() {
             const modal = document.getElementById("alertModal");
             modal.style.display = "block";
         }
 
         // Function to close the custom alert modal
-        function closeAlertModal() {
+        function closeAlertModal(event) {
+            if (event) {
+                event.stopPropagation(); // Prevents click events from bubbling up
+            }
             const modal = document.getElementById("alertModal");
-            modal.style.display = "none";
+            modal.style.display = "none"; // Hides the modal
         }
 
         // Close the modal when clicking outside the content
         window.onclick = function(event) {
             const modal = document.getElementById("alertModal");
-            if (event.target == modal) {
-                modal.style.display = "none";
+            if (event.target === modal) {
+                closeAlertModal(event); // Calls the close function
             }
         };
+
+        // Form submission handler
+        document.getElementById("wish-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            // Validate phone number
+            const phoneInput = document.getElementById("phone").value;
+            const phonePattern = /^[0-9]{10,11}$/; // Adjust the pattern for your requirements
+
+            if (!phonePattern.test(phoneInput)) {
+                alert("Please enter a valid mobile number (10 to 11 digits).");
+                return;
+            }
+
+            // Collect form data
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const phone = phoneInput; // Already validated
+            const wish1 = document.getElementById("wish1").value;
+            const wish2 = document.getElementById("wish2").value;
+
+            // Save data to Firebase
+            set(ref(database, 'wishes/' + username), {
+                username: username,
+                email: email,
+                phone: phone,
+                wish1: wish1,
+                wish2: wish2
+            }).then(() => {
+                console.log('Data saved successfully!');
+                showAlertModal(); // Show success alert
+            }).catch((error) => {
+                console.error('Error saving data:', error);
+            });
+        });
+
+        // Download button functionality
+        document.getElementById("download-btn").addEventListener("click", function() {
+            const data = [
+                ["Username", "Email", "Phone", "First Wish", "Second Wish"],
+                [
+                    document.getElementById("username").value,
+                    document.getElementById("email").value,
+                    document.getElementById("phone").value,
+                    document.getElementById("wish1").value,
+                    document.getElementById("wish2").value
+                ]
+            ];
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Wish List");
+            XLSX.writeFile(workbook, "WishList.xlsx");
+        });
     </script>
 </body>
 </html>
